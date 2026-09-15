@@ -1,0 +1,16 @@
+{
+  "name": "header-lint",
+  "version": "0.1.0",
+  "description": "Lint raw HTTP response headers and report findings by line number",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "header-lint": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "node src/cli.ts"
+  },
+  "engines": {
+    "node": ">=23.6.0"
+  }
+}
