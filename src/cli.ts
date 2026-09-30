@@ -16,13 +16,34 @@ function readInput(path: string | undefined): string {
   }
 }
 
-function main(): void {
-  const path = process.argv[2];
+const USAGE = `usage: header-lint [--json] [file]
 
-  if (path === '--help' || path === '-h') {
-    console.log('usage: header-lint [file]\n\nReads raw HTTP response headers (e.g. from `curl -I`),');
-    console.log('either from FILE or stdin, and prints findings as line:severity rule message.');
-    process.exit(0);
+Reads raw HTTP response headers (e.g. from \`curl -I\`), either from FILE or
+stdin, and prints findings as line: severity rule message.
+
+  --json    print findings as a JSON array on stdout instead of text
+  -h, --help  show this message`;
+
+function main(): void {
+  const args = process.argv.slice(2);
+  let json = false;
+  let path: string | undefined;
+
+  for (const arg of args) {
+    if (arg === '--help' || arg === '-h') {
+      console.log(USAGE);
+      process.exit(0);
+    } else if (arg === '--json') {
+      json = true;
+    } else if (arg.startsWith('-') && arg !== '-') {
+      console.error(`header-lint: unknown option ${arg}\n${USAGE}`);
+      process.exit(2);
+    } else if (path === undefined) {
+      path = arg === '-' ? undefined : arg;
+    } else {
+      console.error(`header-lint: only one input file is supported\n${USAGE}`);
+      process.exit(2);
+    }
   }
 
   let input: string;
@@ -35,15 +56,21 @@ function main(): void {
 
   const findings = lint(input);
 
-  if (findings.length === 0) {
-    console.log('no findings');
-    process.exit(0);
-  }
-
   let worst = 0;
   for (const f of findings) {
-    console.log(`${f.line}: ${f.severity.padEnd(7)} ${f.rule}  ${f.message}`);
     worst = Math.max(worst, EXIT_CODE_BY_SEVERITY[f.severity]);
+  }
+
+  if (json) {
+    // Always emit an array, even when empty, so CI consumers can parse
+    // the output without special-casing the clean run.
+    console.log(JSON.stringify(findings, null, 2));
+  } else if (findings.length === 0) {
+    console.log('no findings');
+  } else {
+    for (const f of findings) {
+      console.log(`${f.line}: ${f.severity.padEnd(7)} ${f.rule}  ${f.message}`);
+    }
   }
 
   process.exit(worst);

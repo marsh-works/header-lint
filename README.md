@@ -48,9 +48,30 @@ Example output:
 6: info    missing-recommended-header  no content-security-policy header found; consider adding one
 ```
 
-The process exits `0` if there are no findings, `1` if the worst finding is
-a warning, and `2` if there's an error (such as a line that isn't a valid
-header at all) or a bad invocation.
+The process exits `0` if there are no findings or only info-level ones, `1`
+if the worst finding is a warning, and `2` if there's an error (such as a
+line that isn't a valid header at all) or a bad invocation.
+
+### JSON output
+
+For CI, pass `--json` to get the findings as a JSON array instead of text:
+
+```sh
+node src/cli.ts --json headers.txt
+```
+
+```json
+[
+  {
+    "line": 3,
+    "severity": "warning",
+    "rule": "duplicate-header",
+    "message": "\"Content-Type\" was already set on line 2; duplicates are undefined behavior for most clients"
+  }
+]
+```
+
+A clean run prints `[]`. The exit codes are the same as in text mode.
 
 ## What it checks right now
 
